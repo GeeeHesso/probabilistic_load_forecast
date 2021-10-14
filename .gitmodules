@@ -1,0 +1,3 @@
+[submodule "CVAE"]
+	path = CVAE
+	url = git@github.com:leokster/CVAE.git
