@@ -123,6 +123,7 @@ class Dataset:
             if isinstance(unscaled_data.index, pd.MultiIndex):
                 
                 # Assert regular shape of dataframe
+                idx = idx.remove_unused_levels()
                 n_timestamps = len(idx.levels[0])
                 n_lags = len(idx.levels[1])
                 if not n_timestamps*n_lags == len(idx):
@@ -132,7 +133,7 @@ class Dataset:
                 
                 # Build new shape of the output array
                 new_shape = []
-                for level in unscaled_data.index.levels:
+                for level in idx.levels:
                     new_shape.append(len(level))
                 new_shape.append(len(unscaled_data.columns))
                 
