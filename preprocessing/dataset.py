@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
         
 def load_dataframe_from_csv(path):
@@ -8,7 +9,15 @@ def load_dataframe_from_csv(path):
     return dataframe
         
 class Dataset:
-    def __init__(self, data, scales=None):
+    def __init__(self, data, scales=None, output_format='lag_last'):
+        
+        # Store output format
+        format_options = {'lag_last', 'feature_last'}
+        if not output_format in format_options:
+            raise ValueError('''Output format must be 'lag_last' or 
+                             'feature_last'.''')
+        else:
+            self.output_format = output_format
         
         # Instantiate scaler
         self.s = self._Scaler(self)
@@ -100,7 +109,6 @@ class Dataset:
             elif isinstance(key, tuple) and len(key) == 2:
                 unscaled_data = self._parent_dataset[key]
                 scale = self._parent_dataset.scales.get(key[0], 1)
-                idx = unscaled_data.index         
             else:
                 raise TypeError('''Key must be either a string or a length
                                two tuple of a string and an index to be passed 
@@ -109,9 +117,18 @@ class Dataset:
             # Scale the data and convert to array
             unscaled_data = unscaled_data.sort_index()
             scaled_data = (unscaled_data/scale).to_numpy()
+            idx = unscaled_data.index
             
             # Check for multiindex
             if isinstance(unscaled_data.index, pd.MultiIndex):
+                
+                # Assert regular shape of dataframe
+                n_timestamps = len(idx.levels[0])
+                n_lags = len(idx.levels[1])
+                if not n_timestamps*n_lags == len(idx):
+                    raise ValueError('''Impossible to convert to
+                                     regularly-shaped array: not all lags
+                                     are available for all timestamps.''')
                 
                 # Build new shape of the output array
                 new_shape = []
@@ -121,8 +138,13 @@ class Dataset:
                 
                 # Reshape output array
                 scaled_data = scaled_data.reshape(new_shape)
+                
+                if self._parent_dataset.output_format == 'lag_last':
+                    scaled_data = np.transpose(scaled_data, [0, 2, 1])
+                
+                idx = idx.levels[0]
 
-            return scaled_data, unscaled_data.index
+            return scaled_data, idx
         
         def __setitem__(self, key, value):
             if isinstance(value, tuple) and len(value) == 3:
@@ -243,7 +265,7 @@ class Dataset:
                 # Add multiindex if not already present
                 if not isinstance(idx, pd.MultiIndex):
                     if not isinstance(idx, pd.DatetimeIndex):
-                        raise TypeError('''Index must be adatetime index 
+                        raise TypeError('''Index must be a datetime index 
                                         or a multiindex containing a
                                         datetime index and an index
                                         containing time lags.''')
