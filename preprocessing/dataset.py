@@ -256,6 +256,11 @@ class Dataset:
                     frame.index = frame.index.remove_unused_levels()
                     
                 self.data[label] = frame
+                
+    def drop_features(self, labels, features):
+        for label, frame in self.data.items():
+            if label in labels:
+                frame.drop(features, axis=1, inplace=True)
             
     def add_lag(self, labels, period, lags, 
                 drop_nans=True, drop_unshared_timestamps=True):
