@@ -38,31 +38,362 @@ class NodalMAEMeans(keras.metrics.Metric):
         self.summed_abs_error.assign(0)
         self.count.assign(0)
         
-class TotalMAEMeans(keras.metrics.Metric):
-    def __init__(self, name='total_mae_means', scale=1, **kwargs):
-        super(TotalMAEMeans, self).__init__(name=name, **kwargs)
+class NodalMAEMSum(keras.metrics.Metric):
+    def __init__(self, name='nodal_maem_sum', scale=1, 
+                 sample_axis=False, **kwargs):
+        super(NodalMAEMSum, self).__init__(name=name, **kwargs)
         self.scale = scale
+        self.sample_axis = sample_axis
         
-        self.summed_abs_error = tf.Variable(0, dtype=tf.float32)
-        self.count = tf.Variable(0, dtype=tf.int32)
+        self.batch_sum = tf.Variable(0, dtype=tf.float32)
+        self.batch_count = tf.Variable(0, dtype=tf.int32)
+        
+    def update_state(self, y_true, y_pred, sample_weight=None):
+        # Add sample dimension to real data for broadcasting
+        if self.sample_axis:
+            y_pred = tf.reduce_mean(y_pred, axis=1)
+            
+        error = y_true - y_pred
+            
+        # Take absolute value
+        abs_error = tf.abs(error)
+        
+        # Sum metric over nodal dimension
+        abs_error_sum = tf.reduce_sum(abs_error, axis=-1)
+        
+        # Average over batch dimension when querying the metric
+        self.batch_sum.assign_add(tf.reduce_sum(abs_error_sum, axis=0))
+        self.batch_count.assign_add(tf.size(abs_error_sum))
+    
+    def result(self):
+        # Average over batch dimension
+        return self.batch_sum/tf.cast(self.batch_count, tf.float32)*self.scale
+    
+    def reset_state(self):
+        self.batch_sum.assign(0)
+        self.batch_count.assign(0)
+        
+class NodalMAEMMax(keras.metrics.Metric):
+    def __init__(self, name='nodal_maem_max', scale=1, 
+                 sample_axis=False, **kwargs):
+        super(NodalMAEMMax, self).__init__(name=name, **kwargs)
+        self.scale = scale
+        self.sample_axis = sample_axis
+        
+        self.batch_sum = tf.Variable(0, dtype=tf.float32)
+        self.batch_count = tf.Variable(0, dtype=tf.int32)
+        
+    def update_state(self, y_true, y_pred, sample_weight=None):
+        # Add sample dimension to real data for broadcasting
+        if self.sample_axis:
+            y_pred = tf.reduce_mean(y_pred, axis=1)
+            
+        error = y_true - y_pred
+            
+        # Take absolute value
+        abs_error = tf.abs(error)
+        
+        # Sum metric over nodal dimension
+        abs_error_max = tf.reduce_max(abs_error, axis=-1)
+        
+        # Average over batch dimension when querying the metric
+        self.batch_sum.assign_add(tf.reduce_sum(abs_error_max, axis=0))
+        self.batch_count.assign_add(tf.size(abs_error_max))
+    
+    def result(self):
+        # Average over batch dimension
+        return self.batch_sum/tf.cast(self.batch_count, tf.float32)*self.scale
+    
+    def reset_state(self):
+        self.batch_sum.assign(0)
+        self.batch_count.assign(0)
+        
+class NodalMAEMMin(keras.metrics.Metric):
+    def __init__(self, name='nodal_maem_min', scale=1, 
+                 sample_axis=False, **kwargs):
+        super(NodalMAEMMin, self).__init__(name=name, **kwargs)
+        self.scale = scale
+        self.sample_axis = sample_axis
+        
+        self.batch_sum = tf.Variable(0, dtype=tf.float32)
+        self.batch_count = tf.Variable(0, dtype=tf.int32)
+        
+    def update_state(self, y_true, y_pred, sample_weight=None):
+        # Add sample dimension to real data for broadcasting
+        if self.sample_axis:
+            y_pred = tf.reduce_mean(y_pred, axis=1)
+            
+        error = y_true - y_pred
+            
+        # Take absolute value
+        abs_error = tf.abs(error)
+        
+        # Sum metric over nodal dimension
+        abs_error_min = tf.reduce_min(abs_error, axis=-1)
+        
+        # Average over batch dimension when querying the metric
+        self.batch_sum.assign_add(tf.reduce_sum(abs_error_min, axis=0))
+        self.batch_count.assign_add(tf.size(abs_error_min))
+    
+    def result(self):
+        # Average over batch dimension
+        return self.batch_sum/tf.cast(self.batch_count, tf.float32)*self.scale
+    
+    def reset_state(self):
+        self.batch_sum.assign(0)
+        self.batch_count.assign(0)
+        
+class NodalMAEMAverage(keras.metrics.Metric):
+    def __init__(self, name='nodal_maem_average', scale=1, 
+                 sample_axis=False, **kwargs):
+        super(NodalMAEMAverage, self).__init__(name=name, **kwargs)
+        self.scale = scale
+        self.sample_axis = sample_axis
+        
+        self.batch_sum = tf.Variable(0, dtype=tf.float32)
+        self.batch_count = tf.Variable(0, dtype=tf.int32)
+        
+    def update_state(self, y_true, y_pred, sample_weight=None):
+        # Add sample dimension to real data for broadcasting
+        if self.sample_axis:
+            y_pred = tf.reduce_mean(y_pred, axis=1)
+            
+        error = y_true - y_pred
+            
+        # Take absolute value
+        abs_error = tf.abs(error)
+        
+        # Average metric over nodal dimension
+        abs_error_mean = tf.reduce_mean(abs_error, axis=-1)
+        
+        # Average over batch dimension when querying the metric
+        self.batch_sum.assign_add(tf.reduce_sum(abs_error_mean, axis=0))
+        self.batch_count.assign_add(tf.size(abs_error_mean))
+    
+    def result(self):
+        # Average over batch dimension
+        return self.batch_sum/tf.cast(self.batch_count, tf.float32)*self.scale
+    
+    def reset_state(self):
+        self.batch_sum.assign(0)
+        self.batch_count.assign(0)
+        
+class NodalMAESum(keras.metrics.Metric):
+    def __init__(self, name='nodal_mae_sum', scale=1, 
+                 sample_axis=False, **kwargs):
+        super(NodalMAESum, self).__init__(name=name, **kwargs)
+        self.scale = scale
+        self.sample_axis = sample_axis
+        
+        self.batch_sum = tf.Variable(0, dtype=tf.float32)
+        self.batch_count = tf.Variable(0, dtype=tf.int32)
+        
+    def update_state(self, y_true, y_pred, sample_weight=None):
+        # Add sample dimension to real data for broadcasting
+        if self.sample_axis:
+            y_true = tf.expand_dims(y_true, axis=1)
+            
+        abs_error = tf.abs(y_true - y_pred)
+        
+        # Average metric over sample dimension
+        if self.sample_axis:
+            abs_error = tf.reduce_mean(abs_error, axis=1)
+        
+        # Sum metric over nodal dimension
+        abs_error_sum = tf.reduce_sum(abs_error, axis=-1)
+        
+        # Average over batch dimension when querying the metric
+        self.batch_sum.assign_add(tf.reduce_sum(abs_error_sum, axis=0))
+        self.batch_count.assign_add(tf.size(abs_error_sum))
+    
+    def result(self):
+        # Average over batch dimension
+        return self.batch_sum/tf.cast(self.batch_count, tf.float32)*self.scale
+    
+    def reset_state(self):
+        self.batch_sum.assign(0)
+        self.batch_count.assign(0)
+        
+class NodalMAEMax(keras.metrics.Metric):
+    def __init__(self, name='nodal_mae_max', scale=1, 
+                 sample_axis=False, **kwargs):
+        super(NodalMAEMax, self).__init__(name=name, **kwargs)
+        self.scale = scale
+        self.sample_axis = sample_axis
+        
+        self.batch_sum = tf.Variable(0, dtype=tf.float32)
+        self.batch_count = tf.Variable(0, dtype=tf.int32)
+        
+    def update_state(self, y_true, y_pred, sample_weight=None):
+        # Add sample dimension to real data for broadcasting
+        if self.sample_axis:
+            y_true = tf.expand_dims(y_true, axis=1)
+            
+        error = y_true - y_pred
+        
+        # Take absolute value
+        abs_error = tf.abs(error)
+        
+        # Average metric over sample dimension
+        if self.sample_axis:
+            abs_error = tf.reduce_mean(abs_error, axis=1)
+        
+        # Sum metric over nodal dimension
+        abs_error_max = tf.reduce_max(abs_error, axis=-1)
+        
+        # Average over batch dimension when querying the metric
+        self.batch_sum.assign_add(tf.reduce_sum(abs_error_max, axis=0))
+        self.batch_count.assign_add(tf.size(abs_error_max))
+    
+    def result(self):
+        # Average over batch dimension
+        return self.batch_sum/tf.cast(self.batch_count, tf.float32)*self.scale
+    
+    def reset_state(self):
+        self.batch_sum.assign(0)
+        self.batch_count.assign(0)
+        
+class NodalMAEMin(keras.metrics.Metric):
+    def __init__(self, name='nodal_mae_min', scale=1, 
+                 sample_axis=False, **kwargs):
+        super(NodalMAEMin, self).__init__(name=name, **kwargs)
+        self.scale = scale
+        self.sample_axis = sample_axis
+        
+        self.batch_sum = tf.Variable(0, dtype=tf.float32)
+        self.batch_count = tf.Variable(0, dtype=tf.int32)
+        
+    def update_state(self, y_true, y_pred, sample_weight=None):
+        # Add sample dimension to real data for broadcasting
+        if self.sample_axis:
+            y_true = tf.expand_dims(y_true, axis=1)
+            
+        error = y_true - y_pred
+        
+        # Take absolute value
+        abs_error = tf.abs(error)
+        
+        # Average metric over sample dimension
+        if self.sample_axis:
+            abs_error = tf.reduce_mean(abs_error, axis=1)
+            
+        # Sum metric over nodal dimension
+        abs_error_min = tf.reduce_min(abs_error, axis=-1)
+        
+        # Average over batch dimension when querying the metric
+        self.batch_sum.assign_add(tf.reduce_sum(abs_error_min, axis=0))
+        self.batch_count.assign_add(tf.size(abs_error_min))
+    
+    def result(self):
+        # Average over batch dimension
+        return self.batch_sum/tf.cast(self.batch_count, tf.float32)*self.scale
+    
+    def reset_state(self):
+        self.batch_sum.assign(0)
+        self.batch_count.assign(0)
+        
+class NodalMAEAverage(keras.metrics.Metric):
+    def __init__(self, name='nodal_mae_average', scale=1, 
+                 sample_axis=False, **kwargs):
+        super(NodalMAEAverage, self).__init__(name=name, **kwargs)
+        self.scale = scale
+        self.sample_axis = sample_axis
+        
+        self.batch_sum = tf.Variable(0, dtype=tf.float32)
+        self.batch_count = tf.Variable(0, dtype=tf.int32)
+        
+    def update_state(self, y_true, y_pred, sample_weight=None):
+        # Add sample dimension to real data for broadcasting
+        if self.sample_axis:
+            y_true = tf.expand_dims(y_true, axis=1)
+            
+        error = y_true - y_pred
+        
+        # Take absolute value
+        abs_error = tf.abs(error)
+        
+        # Average metric over sample dimension
+        if self.sample_axis:
+            abs_error = tf.reduce_mean(abs_error, axis=1)
+        
+        # Average metric over nodal dimension
+        abs_error_mean = tf.reduce_mean(abs_error, axis=-1)
+        
+        # Average over batch dimension when querying the metric
+        self.batch_sum.assign_add(tf.reduce_sum(abs_error_mean, axis=0))
+        self.batch_count.assign_add(tf.size(abs_error_mean))
+    
+    def result(self):
+        # Average over batch dimension
+        return self.batch_sum/tf.cast(self.batch_count, tf.float32)*self.scale
+    
+    def reset_state(self):
+        self.batch_sum.assign(0)
+        self.batch_count.assign(0)
+
+class TotalMAEM(keras.metrics.Metric):
+    def __init__(self, name='total_maem', scale=1, 
+                 sample_axis=False, **kwargs):
+        super(TotalMAEM, self).__init__(name=name, **kwargs)
+        self.scale = scale
+        self.sample_axis = sample_axis
+        
+        self.batch_sum = tf.Variable(0, dtype=tf.float32)
+        self.batch_count = tf.Variable(0, dtype=tf.int32)
         
     def update_state(self, y_true, y_pred, sample_weight=None):
         totals_pred = tf.reduce_sum(y_pred, axis=-1)
         totals_true = tf.reduce_sum(y_true, axis=-1)
-
-        means = tf.reduce_mean(totals_pred, axis=1)
-
-        abs_error = tf.abs(totals_true - means)
         
-        self.summed_abs_error.assign_add(tf.reduce_sum(abs_error))
-        self.count.assign_add(tf.size(abs_error))
+        # Average prediction over sample dimension
+        if self.sample_axis:
+            totals_pred = tf.reduce_mean(totals_pred, axis=1)
+            
+        abs_error = tf.abs(totals_true - totals_pred)
+        
+        self.batch_sum.assign_add(tf.reduce_sum(abs_error))
+        self.batch_count.assign_add(tf.size(abs_error))
     
     def result(self):
-        return self.summed_abs_error/tf.cast(self.count, tf.float32)*self.scale
+        return self.batch_sum/tf.cast(self.batch_count, tf.float32)*self.scale
     
     def reset_state(self):
-        self.summed_abs_error.assign(0)
-        self.count.assign(0)
+        self.batch_sum.assign(0)
+        self.batch_count.assign(0)
+
+class TotalMAE(keras.metrics.Metric):
+    def __init__(self, name='total_mae', scale=1, 
+                 sample_axis=False, **kwargs):
+        super(TotalMAE, self).__init__(name=name, **kwargs)
+        self.scale = scale
+        self.sample_axis = sample_axis
+        
+        self.batch_sum = tf.Variable(0, dtype=tf.float32)
+        self.batch_count = tf.Variable(0, dtype=tf.int32)
+        
+    def update_state(self, y_true, y_pred, sample_weight=None):
+        totals_pred = tf.reduce_sum(y_pred, axis=-1)
+        totals_true = tf.reduce_sum(y_true, axis=-1)
+        
+        # Add sample dimension to real data for broadcasting
+        if self.sample_axis:
+            totals_true = tf.expand_dims(totals_true, axis=1)
+        
+        abs_error = tf.abs(totals_true - totals_pred)
+        
+        # Average metric over sample dimension
+        if self.sample_axis:
+            abs_error = tf.reduce_mean(abs_error, axis=1)
+        
+        self.batch_sum.assign_add(tf.reduce_sum(abs_error))
+        self.batch_count.assign_add(tf.size(abs_error))
+    
+    def result(self):
+        return self.batch_sum/tf.cast(self.batch_count, tf.float32)*self.scale
+    
+    def reset_state(self):
+        self.batch_sum.assign(0)
+        self.batch_count.assign(0)
 
 class NodalCoverageProbability(keras.metrics.Metric):
     def __init__(self, name='nodal_cov_prob', conf_level=0.8, min_samples=10,
@@ -322,19 +653,16 @@ class TotalConfidenceIntervalWidth(keras.metrics.Metric):
     def reset_state(self):
         self.conf_width_sum.assign(0)
         self.total_predictions.assign(0)
-
-class NodalCRPS(keras.metrics.Metric):
-    def __init__(self, name='nodal_crps', scale=1,
-                 skip_zeros=False, **kwargs):
-        super(NodalCRPS, self).__init__(name=name, **kwargs)
-        self.scale = scale
-        self.skip_zeros = skip_zeros
         
-        self.summed_crps = tf.Variable(0, dtype=tf.float32)
-        self.count = tf.Variable(0, dtype=tf.int32)
+class NodalCRPSSum(keras.metrics.Metric):
+    def __init__(self, name='nodal_crps_sum', scale=1, **kwargs):
+        super(NodalCRPSSum, self).__init__(name=name, **kwargs)
+        self.scale = scale
+        
+        self.batch_sum = tf.Variable(0, dtype=tf.float32)
+        self.batch_count = tf.Variable(0, dtype=tf.int32)
         
     def update_state(self, y_true, y_pred, sample_weight=None):
-        
         # Error between sample and real data point
         abs_error = tf.abs(tf.expand_dims(y_true, axis=1) - y_pred)
         
@@ -345,29 +673,134 @@ class NodalCRPS(keras.metrics.Metric):
         # Estimation of CRPS
         crps = abs_error - abs_error_samples/2
         
-        if self.skip_zeros:
-            # Count only non-zero values for means of predictions
-            non_zero_crps = crps*tf.cast(y_pred!=0, tf.float32)
-            sums = tf.reduce_sum(non_zero_crps, axis=1)
-            samples = tf.math.count_nonzero(y_pred, axis=1)
-            crps = sums/tf.cast(samples, tf.float32)
-            
-            # Count only non-zero real values
-            crps = crps[y_true!=0]
-            
-        else:
-            # Count everything
-            crps = tf.reduce_mean(crps, axis=1)
+        # Average over sample dimension
+        crps = tf.reduce_mean(crps, axis=1)
         
-        self.summed_crps.assign_add(tf.reduce_sum(crps))
-        self.count.assign_add(tf.size(crps))
+        # Sum over nodal dimension
+        crps = tf.reduce_sum(crps, axis=-1)
+        
+        # Average over batch dimension when querying the metric
+        self.batch_sum.assign_add(tf.reduce_sum(crps, axis=0))
+        self.batch_count.assign_add(tf.size(crps))
     
     def result(self):
-        return self.summed_crps/tf.cast(self.count, tf.float32)*self.scale
+        # Average over batch dimension
+        return self.batch_sum/tf.cast(self.batch_count, tf.float32)*self.scale
     
     def reset_state(self):
-        self.summed_crps.assign(0)
-        self.count.assign(0)
+        self.batch_sum.assign(0)
+        self.batch_count.assign(0)
+        
+class NodalCRPSMin(keras.metrics.Metric):
+    def __init__(self, name='nodal_crps_min', scale=1, **kwargs):
+        super(NodalCRPSMin, self).__init__(name=name, **kwargs)
+        self.scale = scale
+        
+        self.batch_sum = tf.Variable(0, dtype=tf.float32)
+        self.batch_count = tf.Variable(0, dtype=tf.int32)
+        
+    def update_state(self, y_true, y_pred, sample_weight=None):
+        # Error between sample and real data point
+        abs_error = tf.abs(tf.expand_dims(y_true, axis=1) - y_pred)
+        
+        # Error between two samples
+        y_pred_shifted = tf.roll(y_pred, 1, axis=1)
+        abs_error_samples = tf.abs(y_pred - y_pred_shifted)
+        
+        # Estimation of CRPS
+        crps = abs_error - abs_error_samples/2
+        
+        # Average over sample dimension
+        crps = tf.reduce_mean(crps, axis=1)
+        
+        # Minimum over nodal dimension
+        crps = tf.reduce_min(crps, axis=-1)
+        
+        # Average over batch dimension when querying the metric
+        self.batch_sum.assign_add(tf.reduce_sum(crps, axis=0))
+        self.batch_count.assign_add(tf.size(crps))
+    
+    def result(self):
+        # Average over batch dimension
+        return self.batch_sum/tf.cast(self.batch_count, tf.float32)*self.scale
+    
+    def reset_state(self):
+        self.batch_sum.assign(0)
+        self.batch_count.assign(0)
+
+class NodalCRPSMax(keras.metrics.Metric):
+    def __init__(self, name='nodal_crps_max', scale=1, **kwargs):
+        super(NodalCRPSMax, self).__init__(name=name, **kwargs)
+        self.scale = scale
+        
+        self.batch_sum = tf.Variable(0, dtype=tf.float32)
+        self.batch_count = tf.Variable(0, dtype=tf.int32)
+        
+    def update_state(self, y_true, y_pred, sample_weight=None):
+        # Error between sample and real data point
+        abs_error = tf.abs(tf.expand_dims(y_true, axis=1) - y_pred)
+        
+        # Error between two samples
+        y_pred_shifted = tf.roll(y_pred, 1, axis=1)
+        abs_error_samples = tf.abs(y_pred - y_pred_shifted)
+        
+        # Estimation of CRPS
+        crps = abs_error - abs_error_samples/2
+        
+        # Average over sample dimension
+        crps = tf.reduce_mean(crps, axis=1)
+        
+        # Maximum over nodal dimension
+        crps = tf.reduce_max(crps, axis=-1)
+        
+        # Average over batch dimension when querying the metric
+        self.batch_sum.assign_add(tf.reduce_sum(crps, axis=0))
+        self.batch_count.assign_add(tf.size(crps))
+    
+    def result(self):
+        # Average over batch dimension
+        return self.batch_sum/tf.cast(self.batch_count, tf.float32)*self.scale
+    
+    def reset_state(self):
+        self.batch_sum.assign(0)
+        self.batch_count.assign(0)
+
+class NodalCRPSAverage(keras.metrics.Metric):
+    def __init__(self, name='nodal_crps_average', scale=1, **kwargs):
+        super(NodalCRPSAverage, self).__init__(name=name, **kwargs)
+        self.scale = scale
+        
+        self.batch_sum = tf.Variable(0, dtype=tf.float32)
+        self.batch_count = tf.Variable(0, dtype=tf.int32)
+        
+    def update_state(self, y_true, y_pred, sample_weight=None):
+        # Error between sample and real data point
+        abs_error = tf.abs(tf.expand_dims(y_true, axis=1) - y_pred)
+        
+        # Error between two samples
+        y_pred_shifted = tf.roll(y_pred, 1, axis=1)
+        abs_error_samples = tf.abs(y_pred - y_pred_shifted)
+        
+        # Estimation of CRPS
+        crps = abs_error - abs_error_samples/2
+        
+        # Average over sample dimension
+        crps = tf.reduce_mean(crps, axis=1)
+        
+        # Sum over nodal dimension
+        crps = tf.reduce_sum(crps, axis=-1)
+        
+        # Average over batch dimension when querying the metric
+        self.batch_sum.assign_add(tf.reduce_sum(crps, axis=0))
+        self.batch_count.assign_add(tf.size(crps))
+    
+    def result(self):
+        # Average over batch dimension
+        return self.batch_sum/tf.cast(self.batch_count, tf.float32)*self.scale
+    
+    def reset_state(self):
+        self.batch_sum.assign(0)
+        self.batch_count.assign(0)
         
 class TotalCRPS(keras.metrics.Metric):
     def __init__(self, name='total_crps', scale=1, **kwargs):
