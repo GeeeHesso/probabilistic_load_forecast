@@ -2,8 +2,6 @@ import tensorflow as tf
 import tensorflow_probability as tfp
 from tensorflow import keras
 
-from CVAE.variational_autoencoder.models import VAE
-
 from components.layers import Dense2d
 from components.layers import Sampling
 from components.layers import StackNTimes
