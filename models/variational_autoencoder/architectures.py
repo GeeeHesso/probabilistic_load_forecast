@@ -44,9 +44,10 @@ class MLPCovarianceEncoder(keras.Model):
         y = inputs[1]
         samples = inputs[2]
         
+        y_on = tf.cast((y!=0), tf.float32)
+        
         y = self.dropout_y(y, training)
         
-        y_on = tf.cast((y!=0), tf.float32)
         y = tf.concat([y, y_on], axis=-1)
         
         if self.concat_x:
