@@ -1,3 +1,3 @@
 [submodule "CVAE"]
 	path = models/variational_autoencoder/CVAE
-	url = git@github.com:leokster/CVAE.git
+	url = https://github.com/leokster/CVAE.git
