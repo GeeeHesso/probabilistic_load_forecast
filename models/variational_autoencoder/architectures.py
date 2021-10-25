@@ -266,15 +266,17 @@ class ARPrior(keras.Model):
 class MLPDecoder(keras.Model):
     def __init__(self, output_dim, min_log_var=12, width=32,
                  conditional_bernoulli=True, min_p=0.01, 
-                 skip_connections=False, dropout_x=0.):
+                 skip_connections=False, ar_skip_connections=False,
+                 dropout_x=0.):
         super(MLPDecoder, self).__init__()
         self.output_dim = output_dim
         self.min_log_var = min_log_var
         self.conditional_bernoulli = conditional_bernoulli
         self.min_p = min_p
         self.skip_connections = skip_connections
+        self.ar_skip_connections = ar_skip_connections
         
-        if skip_connections:
+        if skip_connections or ar_skip_connections:
             self.dropout_x = keras.layers.Dropout(rate=dropout_x)
         
         self.stack_inputs = StackNTimes(axis=1)
@@ -311,7 +313,12 @@ class MLPDecoder(keras.Model):
             z = tf.concat([z, x], axis=-1)
         
         h = tf.stack(self.output_dim*[z], axis=-2)
-        
+            
+        if self.ar_skip_connections:
+            x = self.dropout_x(x, training)
+            x = self.stack_inputs(x, samples)
+            h = tf.concat([h, x], axis=-1)
+            
         h_m = self.dense2d_1_m(h)
         h_m = self.dense2d_2_m(h_m)
         h_m = self.mean(h_m)
@@ -352,15 +359,17 @@ class MLPDecoder(keras.Model):
 class LinearDecoder(keras.Model):
     def __init__(self, output_dim, min_log_var=12,
                  conditional_bernoulli=True, min_p=0.01, 
-                 skip_connections=False, dropout_x=0.):
+                 skip_connections=False, ar_skip_connections=False,
+                 dropout_x=0.):
         super(LinearDecoder, self).__init__()
         self.output_dim = output_dim
         self.min_log_var = min_log_var
         self.conditional_bernoulli = conditional_bernoulli
         self.min_p = min_p
         self.skip_connections = skip_connections
+        self.ar_skip_connections = ar_skip_connections
         
-        if skip_connections:
+        if skip_connections or ar_skip_connections:
             self.dropout_x = keras.layers.Dropout(rate=dropout_x)
         
         self.stack_inputs = StackNTimes(axis=1)
@@ -391,6 +400,11 @@ class LinearDecoder(keras.Model):
             z = tf.concat([z, x], axis=-1)
         
         h = tf.stack(self.output_dim*[z], axis=-2)
+        
+        if self.ar_skip_connections:
+            x = self.dropout_x(x, training)
+            x = self.stack_inputs(x, samples)
+            h = tf.concat([h, x], axis=-1)
         
         h_m = self.mean(h)
         mean = tf.squeeze(h_m, axis=-1)
